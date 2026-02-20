@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmAgent – Functional Diagram</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #080c14;
+    --panel: #0d1421;
+    --border: #1a2540;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --accent4: #c96bff;
+    --text: #c8d8f0;
+    --muted: #4a6080;
+    --white: #eef4ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  header .eyebrow {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  header p {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* ─── DIAGRAM LAYOUT ─── */
+  .diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* LAYER */
+  .layer {
+    position: relative;
+    padding: 24px 0;
+  }
+
+  .layer-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-left: 4px;
+    border-left: 2px solid var(--border);
+    padding-left: 10px;
+  }
+
+  .layer-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  /* NODE */
+  .node {
+    flex: 1;
+    min-width: 160px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .node:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(0,229,255,0.08);
+  }
+
+  .node-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .node-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .node-desc {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .node-tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  /* Color variants */
+  .c-cyan  { border-color: var(--accent);  }
+  .c-cyan .node-tag  { color: var(--accent);  border-color: var(--accent);  background: rgba(0,229,255,0.05); }
+
+  .c-orange { border-color: var(--accent2); }
+  .c-orange .node-tag { color: var(--accent2); border-color: var(--accent2); background: rgba(255,107,53,0.05); }
+
+  .c-green  { border-color: var(--accent3); }
+  .c-green .node-tag  { color: var(--accent3);  border-color: var(--accent3);  background: rgba(127,255,107,0.05); }
+
+  .c-purple { border-color: var(--accent4); }
+  .c-purple .node-tag { color: var(--accent4); border-color: var(--accent4); background: rgba(201,107,255,0.05); }
+
+  /* CONNECTOR ARROW */
+  .connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .connector-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .arrow-down {
+    width: 1px;
+    height: 30px;
+    background: linear-gradient(to bottom, var(--border), var(--accent));
+    position: relative;
+    margin: 0 auto;
+  }
+
+  .arrow-down::after {
+    content: '▼';
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--accent);
+    font-size: 10px;
+  }
+
+  .arrow-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: 18px;
+  }
+
+  /* AGENT CORE – special big node */
+  .agent-core {
+    background: linear-gradient(135deg, #0d1a2e 0%, #0d1421 100%);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 28px 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,229,255,0.06), inset 0 0 40px rgba(0,229,255,0.02);
+  }
+
+  .agent-core::before {
+    content: 'AGENT CORE';
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    opacity: 0.5;
+  }
+
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .sub-agent {
+    background: rgba(0,229,255,0.04);
+    border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+
+  .sub-agent .sa-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .sub-agent .sa-desc {
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .agent-core-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--white);
+  }
+
+  .agent-core-title span { color: var(--accent); }
+
+  /* SEPARATOR */
+  .sep {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 8px 0;
+  }
+
+  /* FLOW ARROWS BETWEEN SECTIONS */
+  .flow-arrow {
+    text-align: center;
+    padding: 10px 0;
+    color: var(--muted);
+    font-size: 18px;
+    position: relative;
+  }
+
+  .flow-arrow::before,
+  .flow-arrow::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(50% - 60px);
+    height: 1px;
+    background: var(--border);
+  }
+  .flow-arrow::before { left: 0; }
+  .flow-arrow::after { right: 0; }
+
+  .flow-text {
+    display: inline-block;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    background: var(--bg);
+    padding: 0 12px;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+
+  .legend-title {
+    width: 100%;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid;
+  }
+
+  /* Pulse animation on agent core */
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 20px rgba(0,229,255,0.06); }
+    50% { box-shadow: 0 0 40px rgba(0,229,255,0.14); }
+  }
+  .agent-core { animation: pulse-border 3s ease-in-out infinite; }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .layer { animation: fade-up 0.5s ease both; }
+  .layer:nth-child(1) { animation-delay: 0.0s; }
+  .layer:nth-child(2) { animation-delay: 0.1s; }
+  .layer:nth-child(3) { animation-delay: 0.2s; }
+  .layer:nth-child(4) { animation-delay: 0.3s; }
+  .layer:nth-child(5) { animation-delay: 0.4s; }
+  .layer:nth-child(6) { animation-delay: 0.5s; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="eyebrow">HackFusion 3 · System Architecture</div>
+    <h1>Agentic <span>AI Pharmacy</span><br>Functional Diagram</h1>
+    <p>End-to-end autonomous ecosystem overview</p>
+  </header>
+
+  <div class="diagram">
+
+    <!-- LAYER 1: INPUT -->
+    <div class="layer">
+      <div class="layer-label">01 · Input Layer — User Interfaces</div>
+      <div class="layer-row">
+        <div class="node c-cyan">
+          <span class="node-icon">💬</span>
+          <div class="node-title">Chat Interface</div>
+          <div class="node-desc">Natural language text input. Handles messy, human-like dialogue for orders, queries, and refill requests.</div>
+          <span class="node-tag">Web / Mobile UI</span>
+        </div>
+        <div class="node c-cyan">
+          <span class="node-icon">🎙️</span>
+          <div class="node-title">Voice Interface</div>
+          <div class="node-desc">Speech-to-text capture. Converts spoken orders into structured intent for agent processing.</div>
+          <span class="node-tag">STT · High Priority</span>
+        </div>
+        <div class="node c-cyan">
+          <span class="node-icon">🖥️</span>
+          <div class="node-title">Admin Dashboard</div>
+          <div class="node-desc">Inventory view, low-stock alerts, proactive refill list, and order audit log for pharmacists.</div>
+          <span class="node-tag">Admin View</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARROW -->
+    <div class="flow-arrow"><span class="flow-text">↓ USER INPUT / INTENT</span></div>
+
+    <!-- LAYER 2: AGENT CORE -->
+    <div class="layer">
+      <div class="layer-label">02 · Agent Core — Multi-Agent Orchestration</div>
+      <div class="agent-core">
+        <div class="agent-core-title">Orchestrator <span>Agent</span></div>
+        <div style="font-size:10px; color:var(--muted); margin-top:4px;">Routes requests, chains sub-agents, manages state and conversation context</div>
+        <div class="sep" style="margin-top:16px;"></div>
+        <div class="agent-grid">
+          <div class="sub-agent">
+            <div class="sa-title">🧠 NLU Agent</div>
+            <div class="sa-desc">Extracts medicine name, dosage, quantity, and intent from raw text or transcribed voice.</div>
+          </div>
+          <div class="sub-agent">
+            <div class="sa-title">🛡️ Safety Agent</div>
+            <div class="sa-desc">Checks prescription flags and stock levels against Medicine Master Data before approving any order.</div>
+          </div>
+          <div class="sub-agent">
+            <div class="sa-title">🔮 Prediction Agent</div>
+            <div class="sa-desc">Analyzes customer order history to forecast refill needs and proactively trigger alerts.</div>
+          </div>
+          <div class="sub-agent">
+            <div class="sa-title">⚙️ Action Agent</div>
+            <div class="sa-desc">Executes confirmed orders: updates inventory, triggers webhooks, sends confirmations.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARROW -->
+    <div class="flow-arrow"><span class="flow-text">↓ READ / WRITE</span></div>
+
+    <!-- LAYER 3: BACKEND -->
+    <div class="layer">
+      <div class="layer-label">03 · Mock Backend — APIs & Data Store</div>
+      <div class="layer-row">
+        <div class="node c-orange">
+          <span class="node-icon">💊</span>
+          <div class="node-title">Medicine Inventory API</div>
+          <div class="node-desc">Serves medicine list, stock levels, unit types, and prescription flags from master data CSV/Excel.</div>
+          <span class="node-tag">GET · Source of Truth</span>
+        </div>
+        <div class="node c-orange">
+          <span class="node-icon">📋</span>
+          <div class="node-title">Order History API</div>
+          <div class="node-desc">Stores and retrieves patient purchase history, dosage frequency, and last-order dates.</div>
+          <span class="node-tag">GET / POST</span>
+        </div>
+        <div class="node c-orange">
+          <span class="node-icon">🗃️</span>
+          <div class="node-title">Orders API</div>
+          <div class="node-desc">Accepts new order writes, decrements inventory, and logs transactions in the mock database.</div>
+          <span class="node-tag">POST · Write</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARROW -->
+    <div class="flow-arrow"><span class="flow-text">↓ EVENTS & TRIGGERS</span></div>
+
+    <!-- LAYER 4: AUTOMATION -->
+    <div class="layer">
+      <div class="layer-label">04 · Workflow Automation — Real-world Actions</div>
+      <div class="layer-row">
+        <div class="node c-green">
+          <span class="node-icon">🏭</span>
+          <div class="node-title">Warehouse Webhook</div>
+          <div class="node-desc">Fires mock fulfillment request to warehouse upon order confirmation. n8n / Zapier / custom endpoint.</div>
+          <span class="node-tag">Webhook · Required</span>
+        </div>
+        <div class="node c-green">
+          <span class="node-icon">📧</span>
+          <div class="node-title">Email Confirmation</div>
+          <div class="node-desc">Sends automated order confirmation email to the customer after successful order placement.</div>
+          <span class="node-tag">Bonus · Optional</span>
+        </div>
+        <div class="node c-green">
+          <span class="node-icon">💬</span>
+          <div class="node-title">WhatsApp Alert</div>
+          <div class="node-desc">Sends proactive refill nudges and order confirmations via WhatsApp Business API.</div>
+          <span class="node-tag">Bonus · Optional</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARROW -->
+    <div class="flow-arrow"><span class="flow-text">↓ TRACE LOGS</span></div>
+
+    <!-- LAYER 5: OBSERVABILITY -->
+    <div class="layer">
+      <div class="layer-label">05 · Observability — Mandatory Traceability</div>
+      <div class="layer-row">
+        <div class="node c-purple">
+          <span class="node-icon">🔭</span>
+          <div class="node-title">Langfuse / LangSmith</div>
+          <div class="node-desc">Captures every agent decision, inter-agent message, tool call, and approval/rejection with Chain of Thought reasoning.</div>
+          <span class="node-tag">⚠ Required · Disqualified without</span>
+        </div>
+        <div class="node c-purple">
+          <span class="node-icon">📊</span>
+          <div class="node-title">Trace Log Viewer</div>
+          <div class="node-desc">Public link shared with judges. Shows Agent A → Agent B conversation flow and reasoning trail.</div>
+          <span class="node-tag">Public Link · Submission</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-title">Layer Legend</div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(0,229,255,0.3); border-color:var(--accent);"></div>
+      UI / Input Layer
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(0,229,255,0.1); border-color:var(--accent);"></div>
+      Agent Core
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(255,107,53,0.2); border-color:var(--accent2);"></div>
+      Mock Backend APIs
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(127,255,107,0.2); border-color:var(--accent3);"></div>
+      Workflow Automation
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(201,107,255,0.2); border-color:var(--accent4);"></div>
+      Observability
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

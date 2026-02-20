@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmAgent – Chronological Flow</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #080c14;
+    --panel: #0d1421;
+    --border: #1a2540;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --accent4: #c96bff;
+    --accent5: #ffd166;
+    --text: #c8d8f0;
+    --muted: #4a6080;
+    --white: #eef4ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  header .eyebrow {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px, 5vw, 44px);
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  header p {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 60px;
+  }
+
+  /* vertical spine */
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 21px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent4), transparent);
+    border-radius: 2px;
+  }
+
+  /* ── STEP ── */
+  .step {
+    position: relative;
+    margin-bottom: 0;
+    animation: fade-up 0.5s ease both;
+  }
+
+  /* step number bubble */
+  .step-num {
+    position: absolute;
+    left: -49px;
+    top: 22px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    border: 2px solid;
+    background: var(--bg);
+    z-index: 2;
+  }
+
+  /* connector dot on spine */
+  .step::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 34px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    z-index: 1;
+  }
+
+  /* ── STEP CARD ── */
+  .card {
+    background: var(--panel);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 20px 22px;
+    position: relative;
+    transition: box-shadow 0.2s;
+  }
+
+  .card:hover {
+    box-shadow: 0 0 24px rgba(0,229,255,0.06);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .card-icon {
+    font-size: 22px;
+    line-height: 1;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .card-meta {}
+
+  .card-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--white);
+  }
+
+  .card-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+
+  /* sub-items inside a card */
+  .sub-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
+  }
+
+  .sub-item {
+    border-radius: 6px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .sub-item-title {
+    font-size: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+
+  .sub-item-desc {
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* badge */
+  .badge {
+    display: inline-block;
+    font-size: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid;
+    margin-top: 2px;
+  }
+
+  /* ── COLOR THEMES ── */
+  /* 1 cyan */
+  .t1 .step-num { color: var(--accent); border-color: var(--accent); }
+  .t1 .step::before { background: var(--accent); }
+  .t1 .card { border-color: rgba(0,229,255,0.25); }
+  .t1 .card-label, .t1 .badge { color: var(--accent); border-color: var(--accent); background: rgba(0,229,255,0.05); }
+
+  /* 2 orange */
+  .t2 .step-num { color: var(--accent2); border-color: var(--accent2); }
+  .t2 .step::before { background: var(--accent2); }
+  .t2 .card { border-color: rgba(255,107,53,0.25); }
+  .t2 .card-label, .t2 .badge { color: var(--accent2); border-color: var(--accent2); background: rgba(255,107,53,0.05); }
+
+  /* 3 green */
+  .t3 .step-num { color: var(--accent3); border-color: var(--accent3); }
+  .t3 .step::before { background: var(--accent3); }
+  .t3 .card { border-color: rgba(127,255,107,0.25); }
+  .t3 .card-label, .t3 .badge { color: var(--accent3); border-color: var(--accent3); background: rgba(127,255,107,0.05); }
+
+  /* 4 purple */
+  .t4 .step-num { color: var(--accent4); border-color: var(--accent4); }
+  .t4 .step::before { background: var(--accent4); }
+  .t4 .card { border-color: rgba(201,107,255,0.25); }
+  .t4 .card-label, .t4 .badge { color: var(--accent4); border-color: var(--accent4); background: rgba(201,107,255,0.05); }
+
+  /* 5 yellow */
+  .t5 .step-num { color: var(--accent5); border-color: var(--accent5); }
+  .t5 .step::before { background: var(--accent5); }
+  .t5 .card { border-color: rgba(255,209,102,0.25); }
+  .t5 .card-label, .t5 .badge { color: var(--accent5); border-color: var(--accent5); background: rgba(255,209,102,0.05); }
+
+  /* 6 red */
+  .t6 .step-num { color: #ff4d6d; border-color: #ff4d6d; }
+  .t6 .step::before { background: #ff4d6d; }
+  .t6 .card { border-color: rgba(255,77,109,0.25); }
+  .t6 .card-label, .t6 .badge { color: #ff4d6d; border-color: #ff4d6d; background: rgba(255,77,109,0.05); }
+
+  /* 7 teal */
+  .t7 .step-num { color: #00ffb3; border-color: #00ffb3; }
+  .t7 .step::before { background: #00ffb3; }
+  .t7 .card { border-color: rgba(0,255,179,0.25); }
+  .t7 .card-label, .t7 .badge { color: #00ffb3; border-color: #00ffb3; background: rgba(0,255,179,0.05); }
+
+  /* 8 purple2 */
+  .t8 .step-num { color: #a78bfa; border-color: #a78bfa; }
+  .t8 .step::before { background: #a78bfa; }
+  .t8 .card { border-color: rgba(167,139,250,0.25); }
+  .t8 .card-label, .t8 .badge { color: #a78bfa; border-color: #a78bfa; background: rgba(167,139,250,0.05); }
+
+  /* ── CONNECTOR between steps ── */
+  .step-connector {
+    display: flex;
+    align-items: center;
+    padding: 8px 0 8px 0;
+    position: relative;
+    z-index: 0;
+  }
+
+  .step-connector-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg);
+    white-space: nowrap;
+  }
+
+  /* ── BRANCH (parallel paths) ── */
+  .branch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+
+  .branch-card {
+    background: var(--panel);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+
+  .branch-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .branch-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .branch-desc {
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* animations */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step:nth-child(1)  { animation-delay: 0.05s; }
+  .step:nth-child(2)  { animation-delay: 0.10s; }
+  .step:nth-child(3)  { animation-delay: 0.15s; }
+  .step:nth-child(4)  { animation-delay: 0.20s; }
+  .step:nth-child(5)  { animation-delay: 0.25s; }
+  .step:nth-child(6)  { animation-delay: 0.30s; }
+  .step:nth-child(7)  { animation-delay: 0.35s; }
+  .step:nth-child(8)  { animation-delay: 0.40s; }
+  .step:nth-child(9)  { animation-delay: 0.45s; }
+  .step:nth-child(10) { animation-delay: 0.50s; }
+  .step:nth-child(11) { animation-delay: 0.55s; }
+  .step:nth-child(12) { animation-delay: 0.60s; }
+
+  /* END badge */
+  .end-node {
+    margin-top: 16px;
+    text-align: center;
+    padding: 16px;
+    border: 1px dashed var(--muted);
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="eyebrow">HackFusion 3 · Chronological Flow</div>
+    <h1>Step-by-Step <span>Application</span> Flow</h1>
+    <p>Every function in the order it executes — from input to completion</p>
+  </header>
+
+  <div class="timeline">
+
+    <!-- STEP 1 -->
+    <div class="step t1">
+      <div class="step-num">1</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🧑‍💻</div>
+          <div class="card-meta">
+            <div class="card-label">Input Layer</div>
+            <div class="card-title">User Sends Request</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          The user interacts via Chat (text) or Voice (microphone). Voice input is converted to text via Speech-to-Text before passing downstream. Admin users access the dashboard directly.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">💬 Chat Input</div>
+            <div class="sub-item-desc">Free-form text — "I need paracetamol 500mg, 2 strips"</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🎙️ Voice Input</div>
+            <div class="sub-item-desc">Spoken order → STT engine → raw transcript text</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🖥️ Admin Dashboard</div>
+            <div class="sub-item-desc">Pharmacist views inventory & proactive refill alerts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-connector"><div class="step-connector-label">→ RAW TEXT / TRANSCRIPT</div></div>
+
+    <!-- STEP 2 -->
+    <div class="step t2">
+      <div class="step-num">2</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🧠</div>
+          <div class="card-meta">
+            <div class="card-label">NLU Agent</div>
+            <div class="card-title">Understand & Extract Intent</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          The NLU (Natural Language Understanding) Agent parses messy human dialogue and extracts structured order details. It also identifies if the user is reordering, querying stock, or asking a general question.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">💊 Medicine Name</div>
+            <div class="sub-item-desc">Extracted & normalized (e.g. "para" → Paracetamol)</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">📏 Dosage</div>
+            <div class="sub-item-desc">e.g. 500mg, 10mg/5ml — parsed from sentence</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🔢 Quantity</div>
+            <div class="sub-item-desc">Number of units, strips, or bottles requested</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🎯 Intent</div>
+            <div class="sub-item-desc">New order / refill / stock query / general question</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-connector"><div class="step-connector-label">→ STRUCTURED ORDER OBJECT</div></div>
+
+    <!-- STEP 3 -->
+    <div class="step t3">
+      <div class="step-num">3</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">📦</div>
+          <div class="card-meta">
+            <div class="card-label">Inventory API · Read</div>
+            <div class="card-title">Check Medicine Master Data</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          The agent queries the Mock Backend to look up the medicine. This is the "Source of Truth" — all stock levels, unit types, and prescription flags live here.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">📋 Stock Level</div>
+            <div class="sub-item-desc">Current units available in inventory</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🔒 Prescription Flag</div>
+            <div class="sub-item-desc">Is a prescription required? Yes / No</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🏷️ Unit Type</div>
+            <div class="sub-item-desc">Strip / Bottle / Tablet / Vial etc.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-connector"><div class="step-connector-label">→ INVENTORY DATA RETURNED</div></div>
+
+    <!-- STEP 4 -->
+    <div class="step t4">
+      <div class="step-num">4</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🛡️</div>
+          <div class="card-meta">
+            <div class="card-label">Safety Agent</div>
+            <div class="card-title">Enforce Safety & Policy Rules</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          The Safety Agent autonomously evaluates the order against policy rules. This is a decision gate — the order either passes or is blocked with a reason.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">✅ Stock Check</div>
+            <div class="sub-item-desc">Requested qty ≤ available stock? Pass / Fail</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">📄 Rx Check</div>
+            <div class="sub-item-desc">If prescription required → request upload or block</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🚫 Rejection</div>
+            <div class="sub-item-desc">Informs user with reason (out of stock / needs Rx)</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">✔ Approval</div>
+            <div class="sub-item-desc">Order cleared — passed to Order Agent</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-connector"><div class="step-connector-label">→ APPROVED ORDER / BLOCKED WITH REASON</div></div>
+
+    <!-- STEP 5 -->
+    <div class="step t5">
+      <div class="step-num">5</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">📝</div>
+          <div class="card-meta">
+            <div class="card-label">Orders API · Write</div>
+            <div class="card-title">Place Order & Update Inventory</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          On approval, the Action Agent writes the confirmed order to the mock database and decrements stock levels in the Inventory API — simulating a real warehouse transaction.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">🧾 Order Record</div>
+            <div class="sub-item-desc">Order logged with patient ID, medicine, qty, timestamp</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">📉 Inventory Update</div>
+            <div class="sub-item-desc">Stock decremented by ordered quantity</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-connector"><div class="step-connector-label">→ ORDER CONFIRMED</div></div>
+
+    <!-- STEP 6 -->
+    <div class="step t6">
+      <div class="step-num">6</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🏭</div>
+          <div class="card-meta">
+            <div class="card-label">Workflow Automation</div>
+            <div class="card-title">Trigger Warehouse Fulfillment Webhook</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          Immediately after order confirmation, the agent fires a webhook to the mock warehouse fulfillment endpoint (via n8n / Zapier or a custom API), initiating physical dispatch. Bonus: Email & WhatsApp confirmation sent to customer.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">🔔 Warehouse Webhook</div>
+            <div class="sub-item-desc">POST request to fulfillment API with order payload</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">📧 Email (Bonus)</div>
+            <div class="sub-item-desc">Automated order confirmation to customer email</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">💬 WhatsApp (Bonus)</div>
+            <div class="sub-item-desc">Order summary message via WhatsApp Business API</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-connector"><div class="step-connector-label">→ PARALLEL BACKGROUND PROCESS</div></div>
+
+    <!-- STEP 7 -->
+    <div class="step t7">
+      <div class="step-num">7</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🔮</div>
+          <div class="card-meta">
+            <div class="card-label">Prediction Agent · Background</div>
+            <div class="card-title">Proactive Refill Detection</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          Running in the background (on a schedule or post-order), the Prediction Agent scans all customer order histories to identify who is likely running out of medicine based on dosage frequency and last purchase date.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">📅 History Scan</div>
+            <div class="sub-item-desc">Reads all patient order dates and dosage schedules</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">📊 Refill Forecast</div>
+            <div class="sub-item-desc">Estimates when each patient will run out</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🚨 Alert Generation</div>
+            <div class="sub-item-desc">Flags at-risk patients → pushes to Admin Dashboard</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">💬 Refill Nudge</div>
+            <div class="sub-item-desc">Initiates proactive chat / WhatsApp message to patient</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-connector"><div class="step-connector-label">→ EVERY ACTION TRACED</div></div>
+
+    <!-- STEP 8 -->
+    <div class="step t8">
+      <div class="step-num">8</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🔭</div>
+          <div class="card-meta">
+            <div class="card-label">Observability · Mandatory</div>
+            <div class="card-title">Log All Agent Decisions & Traces</div>
+          </div>
+        </div>
+        <div class="card-desc">
+          Every step above — every agent call, tool use, approval, rejection, and webhook — is captured in real-time by Langfuse or LangSmith. Judges receive a public link to review the full Chain of Thought.
+        </div>
+        <div class="sub-items">
+          <div class="sub-item">
+            <div class="sub-item-title">🧵 Chain of Thought</div>
+            <div class="sub-item-desc">Agent A → Agent B reasoning trail logged per request</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">✅ Approval Trace</div>
+            <div class="sub-item-desc">Why Safety Agent approved or rejected an order</div>
+          </div>
+          <div class="sub-item">
+            <div class="sub-item-title">🔗 Public Link</div>
+            <div class="sub-item-desc">Shared with judges — missing = disqualified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="end-node">✓ &nbsp; ORDER COMPLETE · PATIENT NOTIFIED · INVENTORY UPDATED · TRACE LOGGED</div>
+
+</div>
+</body>
+</html>
