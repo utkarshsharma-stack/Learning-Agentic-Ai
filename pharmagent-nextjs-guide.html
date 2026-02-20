@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmAgent – Complete Build Guide (Next.js)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #080c14;
+    --panel: #0d1421;
+    --border: #1a2540;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --accent4: #c96bff;
+    --accent5: #ffd166;
+    --red: #ff4d6d;
+    --teal: #00ffb3;
+    --text: #c8d8f0;
+    --muted: #4a6080;
+    --white: #eef4ff;
+    --code-bg: #060a10;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px 100px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; }
+
+  header {
+    text-align: center;
+    margin-bottom: 60px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow { font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 14px; }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 800; color: var(--white);
+    line-height: 1.05; letter-spacing: -1.5px;
+  }
+  header h1 span { color: var(--accent); }
+  header p { margin-top: 14px; font-size: 11px; color: var(--muted); letter-spacing: 1px; line-height: 1.8; }
+
+  .stack-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+  .pill { font-size: 9px; letter-spacing: 1px; padding: 4px 12px; border-radius: 20px; border: 1px solid; text-transform: uppercase; }
+  .pill-cyan   { color: var(--accent);  border-color: var(--accent);  background: rgba(0,229,255,0.07); }
+  .pill-orange { color: var(--accent2); border-color: var(--accent2); background: rgba(255,107,53,0.07); }
+  .pill-green  { color: var(--accent3); border-color: var(--accent3); background: rgba(127,255,107,0.07); }
+  .pill-purple { color: var(--accent4); border-color: var(--accent4); background: rgba(201,107,255,0.07); }
+  .pill-yellow { color: var(--accent5); border-color: var(--accent5); background: rgba(255,209,102,0.07); }
+  .pill-red    { color: var(--red);     border-color: var(--red);     background: rgba(255,77,109,0.07); }
+  .pill-teal   { color: var(--teal);    border-color: var(--teal);    background: rgba(0,255,179,0.07); }
+  .pill-white  { color: var(--white);   border-color: var(--border);  background: rgba(255,255,255,0.04); }
+
+  .phase { margin-bottom: 52px; }
+  .phase-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .phase-num { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; color: var(--bg); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .phase-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--white); }
+  .phase-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+  .step-head { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; }
+  .step-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .step-info { flex: 1; }
+  .step-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .step-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--white); }
+  .step-desc { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.7; }
+
+  .code-block { background: var(--code-bg); border-top: 1px solid var(--border); padding: 18px 20px; overflow-x: auto; }
+  .code-label { font-size: 8px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+
+  pre { font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.85; color: #8ab4f8; white-space: pre-wrap; word-break: break-word; }
+  .cm { color: #5f7a5f; }
+  .ky { color: #c792ea; }
+  .st { color: #c3e88d; }
+  .fn { color: #82aaff; }
+  .nm { color: #f78c6c; }
+  .op { color: #89ddff; }
+  .tg { color: #ff9cac; }
+
+  .info-box { border-radius: 8px; padding: 14px 16px; margin: 12px 18px; font-size: 10px; line-height: 1.7; border-left: 3px solid; }
+  .info-warn { background: rgba(255,209,102,0.05); border-color: var(--accent5); color: #c8a84b; }
+  .info-tip  { background: rgba(0,229,255,0.05);   border-color: var(--accent);  color: #6ab4c4; }
+  .info-req  { background: rgba(255,77,109,0.05);  border-color: var(--red);     color: #c46478; }
+  .info-ok   { background: rgba(127,255,107,0.05); border-color: var(--accent3); color: #7dba7a; }
+
+  .key-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .key-table th { text-align: left; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .key-table td { padding: 10px 12px; border-bottom: 1px solid rgba(26,37,64,0.5); vertical-align: top; line-height: 1.6; }
+  .key-table tr:last-child td { border-bottom: none; }
+  .key-name { color: var(--white); font-weight: 600; }
+  .key-free { color: var(--accent3); }
+  .key-paid { color: var(--accent5); }
+  .key-req  { color: var(--red); font-size: 8px; letter-spacing: 1px; }
+  .key-bonus{ color: var(--accent4); font-size: 8px; letter-spacing: 1px; }
+
+  .tree { font-size: 11px; line-height: 2.1; color: var(--text); }
+  .tree .dir  { color: var(--accent); }
+  .tree .file { color: #8ab4f8; }
+  .tree .cmt  { color: var(--muted); }
+
+  .p1 .phase-num { background: var(--accent); }
+  .p2 .phase-num { background: var(--accent2); }
+  .p3 .phase-num { background: var(--accent3); color: #080c14; }
+  .p4 .phase-num { background: var(--accent4); }
+  .p5 .phase-num { background: var(--accent5); color: #080c14; }
+  .p6 .phase-num { background: var(--red); }
+  .p7 .phase-num { background: var(--teal); color: #080c14; }
+  .p8 .phase-num { background: #a78bfa; }
+
+  .p1 .phase-title { color: var(--accent); }
+  .p2 .phase-title { color: var(--accent2); }
+  .p3 .phase-title { color: var(--accent3); }
+  .p4 .phase-title { color: var(--accent4); }
+  .p5 .phase-title { color: var(--accent5); }
+  .p6 .phase-title { color: var(--red); }
+  .p7 .phase-title { color: var(--teal); }
+  .p8 .phase-title { color: #a78bfa; }
+
+  .badge-row { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 18px 14px; }
+  .badge { font-size: 8px; letter-spacing: 1px; padding: 2px 8px; border-radius: 20px; border: 1px solid; text-transform: uppercase; }
+  .badge-new    { color: var(--accent3); border-color: var(--accent3); background: rgba(127,255,107,0.07); }
+  .badge-bonus  { color: var(--accent4); border-color: var(--accent4); background: rgba(201,107,255,0.07); }
+  .badge-req    { color: var(--red);     border-color: var(--red);     background: rgba(255,77,109,0.07); }
+
+  footer { margin-top: 60px; text-align: center; font-size: 9px; color: var(--muted); letter-spacing: 2px; padding-top: 20px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="eyebrow">HackFusion 3 · Full Stack Build Guide</div>
+    <h1>PharmAgent <span>Complete</span><br>Implementation Guide</h1>
+    <p>Next.js + Tailwind · FastAPI · LangGraph · Gemini Pro · Supabase<br>
+    + Voice (Deepgram) · Email (Resend) · WhatsApp (Twilio) · Observability (Langfuse)</p>
+    <div class="stack-pills">
+      <span class="pill pill-white">Next.js 14</span>
+      <span class="pill pill-white">Tailwind CSS</span>
+      <span class="pill pill-cyan">Gemini Pro</span>
+      <span class="pill pill-orange">LangGraph</span>
+      <span class="pill pill-green">FastAPI</span>
+      <span class="pill pill-yellow">Supabase</span>
+      <span class="pill pill-red">Langfuse</span>
+      <span class="pill pill-teal">Deepgram</span>
+      <span class="pill pill-purple">Resend + Twilio</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 1: SETUP & KEYS -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p1">
+    <div class="phase-header">
+      <div class="phase-num">1</div>
+      <div>
+        <div class="phase-title">API Keys & Project Setup</div>
+        <div class="phase-sub">Everything you need before writing code</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🔑</div>
+        <div class="step-info">
+          <div class="step-label">Step 1.1 · API Keys</div>
+          <div class="step-title">All API Keys Required for This Stack</div>
+          <div class="step-desc">Sign up for each service and copy your keys before starting. All free tiers are sufficient for a hackathon.</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <table class="key-table">
+          <tr>
+            <th>Service</th><th>Env Variable</th><th>Cost</th><th>Get It At</th><th>Priority</th>
+          </tr>
+          <tr>
+            <td class="key-name">Google Gemini Pro</td>
+            <td><code>GEMINI_API_KEY</code></td>
+            <td class="key-free">Free tier</td>
+            <td>aistudio.google.com</td>
+            <td class="key-req">MUST HAVE</td>
+          </tr>
+          <tr>
+            <td class="key-name">Langfuse (Public)</td>
+            <td><code>LANGFUSE_PUBLIC_KEY</code></td>
+            <td class="key-free">Free</td>
+            <td>cloud.langfuse.com</td>
+            <td class="key-req">MUST HAVE</td>
+          </tr>
+          <tr>
+            <td class="key-name">Langfuse (Secret)</td>
+            <td><code>LANGFUSE_SECRET_KEY</code></td>
+            <td class="key-free">Free</td>
+            <td>cloud.langfuse.com</td>
+            <td class="key-req">MUST HAVE</td>
+          </tr>
+          <tr>
+            <td class="key-name">Supabase URL</td>
+            <td><code>SUPABASE_URL</code></td>
+            <td class="key-free">Free</td>
+            <td>supabase.com → Project Settings</td>
+            <td class="key-req">MUST HAVE</td>
+          </tr>
+          <tr>
+            <td class="key-name">Supabase Anon Key</td>
+            <td><code>SUPABASE_ANON_KEY</code></td>
+            <td class="key-free">Free</td>
+            <td>supabase.com → Project Settings → API</td>
+            <td class="key-req">MUST HAVE</td>
+          </tr>
+          <tr>
+            <td class="key-name">webhook.site URL</td>
+            <td><code>WAREHOUSE_WEBHOOK_URL</code></td>
+            <td class="key-free">Free — no signup</td>
+            <td>webhook.site → copy your unique URL</td>
+            <td class="key-req">MUST HAVE</td>
+          </tr>
+          <tr>
+            <td class="key-name">Deepgram (Voice STT)</td>
+            <td><code>DEEPGRAM_API_KEY</code></td>
+            <td class="key-free">Free $200 credit</td>
+            <td>console.deepgram.com</td>
+            <td class="key-bonus">BONUS ✓</td>
+          </tr>
+          <tr>
+            <td class="key-name">Resend (Email)</td>
+            <td><code>RESEND_API_KEY</code></td>
+            <td class="key-free">Free 3,000/month</td>
+            <td>resend.com → API Keys</td>
+            <td class="key-bonus">BONUS ✓</td>
+          </tr>
+          <tr>
+            <td class="key-name">Twilio Account SID</td>
+            <td><code>TWILIO_ACCOUNT_SID</code></td>
+            <td class="key-paid">Free trial credit</td>
+            <td>console.twilio.com</td>
+            <td class="key-bonus">BONUS ✓</td>
+          </tr>
+          <tr>
+            <td class="key-name">Twilio Auth Token</td>
+            <td><code>TWILIO_AUTH_TOKEN</code></td>
+            <td class="key-paid">Free trial credit</td>
+            <td>console.twilio.com</td>
+            <td class="key-bonus">BONUS ✓</td>
+          </tr>
+          <tr>
+            <td class="key-name">Twilio WhatsApp No.</td>
+            <td><code>TWILIO_WHATSAPP_FROM</code></td>
+            <td class="key-paid">Sandbox: free</td>
+            <td>Twilio → Messaging → WhatsApp Sandbox</td>
+            <td class="key-bonus">BONUS ✓</td>
+          </tr>
+        </table>
+      </div>
+      <div class="info-box info-tip">💡 For Twilio WhatsApp in a hackathon, use the <strong>WhatsApp Sandbox</strong> — no approval needed. Just scan the QR code to connect your test number.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">📁</div>
+        <div class="step-info">
+          <div class="step-label">Step 1.2 · Structure</div>
+          <div class="step-title">Full Project Folder Structure</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Monorepo Layout</div>
+        <pre class="tree">
+<span class="dir">pharmagent/</span>
+├── <span class="dir">backend/</span>                          <span class="cmt"># Python FastAPI</span>
+│   ├── <span class="dir">agents/</span>
+│   │   ├── <span class="file">graph.py</span>                  <span class="cmt"># LangGraph graph + state</span>
+│   │   ├── <span class="file">nlu_agent.py</span>              <span class="cmt"># Intent + entity extraction</span>
+│   │   ├── <span class="file">safety_agent.py</span>           <span class="cmt"># Stock + Rx policy check</span>
+│   │   ├── <span class="file">action_agent.py</span>           <span class="cmt"># Order write + webhook + notifications</span>
+│   │   └── <span class="file">prediction_agent.py</span>       <span class="cmt"># Proactive refill scanner</span>
+│   ├── <span class="dir">services/</span>
+│   │   ├── <span class="file">email_service.py</span>          <span class="cmt"># Resend email</span>
+│   │   ├── <span class="file">whatsapp_service.py</span>       <span class="cmt"># Twilio WhatsApp</span>
+│   │   └── <span class="file">voice_service.py</span>          <span class="cmt"># Deepgram STT</span>
+│   ├── <span class="dir">db/</span>
+│   │   └── <span class="file">supabase_client.py</span>
+│   ├── <span class="dir">data/</span>
+│   │   ├── <span class="file">medicines.csv</span>
+│   │   └── <span class="file">order_history.csv</span>
+│   ├── <span class="file">main.py</span>                       <span class="cmt"># FastAPI app + all routes</span>
+│   ├── <span class="file">seed.py</span>                       <span class="cmt"># One-time DB seeder</span>
+│   ├── <span class="file">requirements.txt</span>
+│   └── <span class="file">.env</span>                          <span class="cmt"># All secret keys</span>
+│
+├── <span class="dir">frontend/</span>                         <span class="cmt"># Next.js 14 App Router</span>
+│   ├── <span class="dir">app/</span>
+│   │   ├── <span class="file">page.jsx</span>                  <span class="cmt"># Patient chat page (default)</span>
+│   │   ├── <span class="dir">admin/</span>
+│   │   │   └── <span class="file">page.jsx</span>              <span class="cmt"># Admin dashboard</span>
+│   │   └── <span class="file">layout.jsx</span>               <span class="cmt"># Root layout + nav</span>
+│   ├── <span class="dir">components/</span>
+│   │   ├── <span class="file">ChatInterface.jsx</span>
+│   │   ├── <span class="file">VoiceButton.jsx</span>
+│   │   ├── <span class="file">AdminDashboard.jsx</span>
+│   │   ├── <span class="file">InventoryTable.jsx</span>
+│   │   └── <span class="file">RefillAlerts.jsx</span>
+│   ├── <span class="file">next.config.js</span>
+│   ├── <span class="file">tailwind.config.js</span>
+│   └── <span class="file">.env.local</span>                   <span class="cmt"># NEXT_PUBLIC_API_URL</span>
+│
+└── <span class="file">README.md</span></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">⚙️</div>
+        <div class="step-info">
+          <div class="step-label">Step 1.3 · Install</div>
+          <div class="step-title">Install All Dependencies</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Backend — Python packages</div>
+        <pre><span class="cm"># In /backend</span>
+python -m venv venv
+source venv/bin/activate       <span class="cm"># Windows: venv\Scripts\activate</span>
+
+pip install fastapi uvicorn python-multipart \
+  langgraph langchain-google-genai langchain-core \
+  supabase langfuse \
+  httpx resend twilio \
+  pandas python-dotenv</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Frontend — Next.js 14 + Tailwind</div>
+        <pre><span class="cm"># In /frontend</span>
+npx create-next-app@latest . --app --tailwind --eslint --src-dir=no
+npm install axios
+<span class="cm"># Tailwind is already configured by create-next-app</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/.env</div>
+        <pre>GEMINI_API_KEY=your_gemini_key
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+LANGFUSE_PUBLIC_KEY=pk-lf-xxx
+LANGFUSE_SECRET_KEY=sk-lf-xxx
+DEEPGRAM_API_KEY=your_deepgram_key
+RESEND_API_KEY=re_xxx
+TWILIO_ACCOUNT_SID=ACxxx
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886   <span class="cm"># Twilio sandbox number</span>
+WAREHOUSE_WEBHOOK_URL=https://webhook.site/your-uuid</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label">frontend/.env.local</div>
+        <pre>NEXT_PUBLIC_API_URL=http://localhost:8000</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 2: DATABASE -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p2">
+    <div class="phase-header">
+      <div class="phase-num">2</div>
+      <div>
+        <div class="phase-title">Supabase Database Setup</div>
+        <div class="phase-sub">Create tables + seed mock pharmacy data</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🗄️</div>
+        <div class="step-info">
+          <div class="step-label">Step 2.1 · SQL Tables</div>
+          <div class="step-title">Run this SQL in Supabase Dashboard → SQL Editor</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">SQL Schema</div>
+        <pre><span class="cm">-- 1. Medicine Inventory (Source of Truth)</span>
+<span class="ky">CREATE TABLE</span> medicines (
+  id          <span class="nm">SERIAL PRIMARY KEY</span>,
+  name        <span class="nm">TEXT NOT NULL</span>,
+  dosage      <span class="nm">TEXT</span>,
+  stock       <span class="nm">INTEGER DEFAULT 0</span>,
+  unit        <span class="nm">TEXT</span>,
+  rx_required <span class="nm">BOOLEAN DEFAULT FALSE</span>,
+  price       <span class="nm">NUMERIC(10,2)</span>
+);
+
+<span class="cm">-- 2. Customer Order History</span>
+<span class="ky">CREATE TABLE</span> order_history (
+  id               <span class="nm">SERIAL PRIMARY KEY</span>,
+  patient_id       <span class="nm">TEXT NOT NULL</span>,
+  patient_name     <span class="nm">TEXT</span>,
+  patient_email    <span class="nm">TEXT</span>,
+  patient_phone    <span class="nm">TEXT</span>,            <span class="cm">-- for WhatsApp</span>
+  medicine_name    <span class="nm">TEXT</span>,
+  quantity         <span class="nm">INTEGER</span>,
+  dosage_frequency <span class="nm">TEXT</span>,
+  purchase_date    <span class="nm">DATE</span>,
+  days_supply      <span class="nm">INTEGER DEFAULT 30</span>
+);
+
+<span class="cm">-- 3. New Orders</span>
+<span class="ky">CREATE TABLE</span> orders (
+  id           <span class="nm">SERIAL PRIMARY KEY</span>,
+  patient_id   <span class="nm">TEXT</span>,
+  medicine_id  <span class="nm">INTEGER REFERENCES medicines(id)</span>,
+  quantity     <span class="nm">INTEGER</span>,
+  status       <span class="nm">TEXT DEFAULT 'confirmed'</span>,
+  created_at   <span class="nm">TIMESTAMPTZ DEFAULT NOW()</span>,
+  fulfilled    <span class="nm">BOOLEAN DEFAULT FALSE</span>
+);</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🌱</div>
+        <div class="step-info">
+          <div class="step-label">Step 2.2 · Seed Script</div>
+          <div class="step-title">Load CSV Data into Supabase</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/seed.py</div>
+        <pre><span class="ky">import</span> pandas <span class="ky">as</span> pd
+<span class="ky">from</span> supabase <span class="ky">import</span> create_client
+<span class="ky">import</span> os
+<span class="ky">from</span> dotenv <span class="ky">import</span> load_dotenv
+
+load_dotenv()
+sb = create_client(os.getenv(<span class="st">"SUPABASE_URL"</span>), os.getenv(<span class="st">"SUPABASE_ANON_KEY"</span>))
+
+<span class="cm"># Seed medicines — column names must match your CSV headers</span>
+meds = pd.read_csv(<span class="st">"data/medicines.csv"</span>).to_dict(orient=<span class="st">"records"</span>)
+sb.table(<span class="st">"medicines"</span>).insert(meds).execute()
+
+<span class="cm"># Seed order history</span>
+hist = pd.read_csv(<span class="st">"data/order_history.csv"</span>).to_dict(orient=<span class="st">"records"</span>)
+sb.table(<span class="st">"order_history"</span>).insert(hist).execute()
+
+<span class="fn">print</span>(<span class="st">"✅ Seeded successfully!"</span>)</pre>
+      </div>
+      <div class="info-box info-ok">✅ Run once: <code>python seed.py</code> — then never again unless you reset the DB.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 3: SERVICES (BONUS) -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p3">
+    <div class="phase-header">
+      <div class="phase-num">3</div>
+      <div>
+        <div class="phase-title">Notification Services</div>
+        <div class="phase-sub">Deepgram (voice) · Resend (email) · Twilio (WhatsApp)</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🎙️</div>
+        <div class="step-info">
+          <div class="step-label">Step 3.1 · Deepgram</div>
+          <div class="step-title">Speech-to-Text Voice Service</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/services/voice_service.py</div>
+        <pre><span class="ky">import</span> httpx, os
+
+<span class="ky">async def</span> <span class="fn">transcribe_audio</span>(audio_bytes: bytes) -> str:
+    <span class="st">"""Send audio bytes to Deepgram, return transcript string."""</span>
+    headers = {
+        <span class="st">"Authorization"</span>: <span class="st">f"Token {os.getenv('DEEPGRAM_API_KEY')}"</span>,
+        <span class="st">"Content-Type"</span>: <span class="st">"audio/webm"</span>
+    }
+    params = { <span class="st">"model"</span>: <span class="st">"nova-2"</span>, <span class="st">"language"</span>: <span class="st">"en-IN"</span> }  <span class="cm"># en-IN for Indian English</span>
+
+    <span class="ky">async with</span> httpx.AsyncClient() <span class="ky">as</span> client:
+        r = <span class="ky">await</span> client.post(
+            <span class="st">"https://api.deepgram.com/v1/listen"</span>,
+            headers=headers, params=params, content=audio_bytes, timeout=<span class="nm">15.0</span>
+        )
+    data = r.json()
+    <span class="ky">return</span> data[<span class="st">"results"</span>][<span class="st">"channels"</span>][<span class="nm">0</span>][<span class="st">"alternatives"</span>][<span class="nm">0</span>][<span class="st">"transcript"</span>]</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">📧</div>
+        <div class="step-info">
+          <div class="step-label">Step 3.2 · Resend</div>
+          <div class="step-title">Order Confirmation Email</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/services/email_service.py</div>
+        <pre><span class="ky">import</span> resend, os
+
+resend.api_key = os.getenv(<span class="st">"RESEND_API_KEY"</span>)
+
+<span class="ky">def</span> <span class="fn">send_order_confirmation</span>(to_email: str, patient_name: str,
+                              medicine: str, qty: int, order_id: int):
+    resend.Emails.send({
+        <span class="st">"from"</span>: <span class="st">"PharmAgent &lt;orders@yourdomain.com&gt;"</span>,
+        <span class="st">"to"</span>: [to_email],
+        <span class="st">"subject"</span>: <span class="st">f"✅ Order #{order_id} Confirmed — {medicine}"</span>,
+        <span class="st">"html"</span>: <span class="st">f"""
+        &lt;h2&gt;Hi {patient_name} 👋&lt;/h2&gt;
+        &lt;p&gt;Your order has been confirmed and sent to our warehouse.&lt;/p&gt;
+        &lt;table&gt;
+          &lt;tr&gt;&lt;td&gt;&lt;b&gt;Order ID&lt;/b&gt;&lt;/td&gt;&lt;td&gt;#{order_id}&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;&lt;b&gt;Medicine&lt;/b&gt;&lt;/td&gt;&lt;td&gt;{medicine}&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;&lt;b&gt;Quantity&lt;/b&gt;&lt;/td&gt;&lt;td&gt;{qty}&lt;/td&gt;&lt;/tr&gt;
+        &lt;/table&gt;
+        &lt;p&gt;Thank you for using PharmAgent 💊&lt;/p&gt;
+        """</span>
+    })</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">💬</div>
+        <div class="step-info">
+          <div class="step-label">Step 3.3 · Twilio</div>
+          <div class="step-title">WhatsApp Order Alert & Refill Nudge</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/services/whatsapp_service.py</div>
+        <pre><span class="ky">from</span> twilio.rest <span class="ky">import</span> Client
+<span class="ky">import</span> os
+
+client = Client(os.getenv(<span class="st">"TWILIO_ACCOUNT_SID"</span>), os.getenv(<span class="st">"TWILIO_AUTH_TOKEN"</span>))
+FROM = os.getenv(<span class="st">"TWILIO_WHATSAPP_FROM"</span>)
+
+<span class="ky">def</span> <span class="fn">send_order_whatsapp</span>(to_phone: str, medicine: str, qty: int, order_id: int):
+    <span class="cm"># to_phone must be: "whatsapp:+91XXXXXXXXXX"</span>
+    client.messages.create(
+        from_=FROM,
+        to=<span class="st">f"whatsapp:{to_phone}"</span>,
+        body=<span class="st">f"✅ *PharmAgent Order Confirmed*\n\n"</span>
+             <span class="st">f"Order ID: #{order_id}\nMedicine: {medicine}\nQty: {qty}\n\n"</span>
+             <span class="st">f"Your order is being processed. Thank you! 💊"</span>
+    )
+
+<span class="ky">def</span> <span class="fn">send_refill_nudge</span>(to_phone: str, patient_name: str, medicine: str, days_left: int):
+    client.messages.create(
+        from_=FROM,
+        to=<span class="st">f"whatsapp:{to_phone}"</span>,
+        body=<span class="st">f"⚠️ *PharmAgent Refill Reminder*\n\n"</span>
+             <span class="st">f"Hi {patient_name}! You have only *{days_left} days* of {medicine} left.\n"</span>
+             <span class="st">f"Reply here or visit our portal to reorder. 💊"</span>
+    )</pre>
+      </div>
+      <div class="info-box info-warn">⚠ For Twilio sandbox: the customer must first send "join &lt;sandbox-keyword&gt;" to the Twilio WhatsApp number before they can receive messages. Show this in your demo.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 4: LANGGRAPH AGENTS -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p4">
+    <div class="phase-header">
+      <div class="phase-num">4</div>
+      <div>
+        <div class="phase-title">LangGraph Agents</div>
+        <div class="phase-sub">4 agents + conditional edges + Langfuse tracing on Gemini Pro</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🔀</div>
+        <div class="step-info">
+          <div class="step-label">Step 4.1 · Graph State + Setup</div>
+          <div class="step-title">Shared State & Gemini + Langfuse Init</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/agents/graph.py</div>
+        <pre><span class="ky">from</span> langgraph.graph <span class="ky">import</span> StateGraph, END
+<span class="ky">from</span> langchain_google_genai <span class="ky">import</span> ChatGoogleGenerativeAI
+<span class="ky">from</span> typing <span class="ky">import</span> TypedDict, Optional
+<span class="ky">from</span> langfuse <span class="ky">import</span> Langfuse
+<span class="ky">from</span> agents.nlu_agent <span class="ky">import</span> nlu_node
+<span class="ky">from</span> agents.safety_agent <span class="ky">import</span> safety_node
+<span class="ky">from</span> agents.action_agent <span class="ky">import</span> action_node
+<span class="ky">import</span> os
+
+<span class="cm"># ── Gemini Pro</span>
+llm = ChatGoogleGenerativeAI(
+    model=<span class="st">"gemini-1.5-pro"</span>,
+    google_api_key=os.getenv(<span class="st">"GEMINI_API_KEY"</span>),
+    temperature=<span class="nm">0.1</span>
+)
+
+<span class="cm"># ── Langfuse (traces every agent call)</span>
+langfuse = Langfuse(
+    public_key=os.getenv(<span class="st">"LANGFUSE_PUBLIC_KEY"</span>),
+    secret_key=os.getenv(<span class="st">"LANGFUSE_SECRET_KEY"</span>),
+    host=<span class="st">"https://cloud.langfuse.com"</span>
+)
+
+<span class="cm"># ── Shared state across all nodes</span>
+<span class="ky">class</span> <span class="fn">PharmState</span>(TypedDict):
+    user_input:       str
+    patient_id:       str
+    patient_email:    Optional[str]
+    patient_phone:    Optional[str]
+    patient_name:     Optional[str]
+    medicine_name:    Optional[str]
+    dosage:           Optional[str]
+    quantity:         Optional[int]
+    intent:           Optional[str]
+    stock_data:       Optional[dict]
+    rx_required:      Optional[bool]
+    safety_approved:  Optional[bool]
+    rejection_reason: Optional[str]
+    order_id:         Optional[int]
+    response:         Optional[str]
+
+<span class="cm"># ── Build graph</span>
+graph = StateGraph(PharmState)
+graph.add_node(<span class="st">"nlu"</span>,    <span class="ky">lambda</span> s: nlu_node(s, llm, langfuse))
+graph.add_node(<span class="st">"safety"</span>, <span class="ky">lambda</span> s: safety_node(s, langfuse))
+graph.add_node(<span class="st">"action"</span>, <span class="ky">lambda</span> s: action_node(s, langfuse))
+graph.add_node(<span class="st">"reject"</span>,  <span class="ky">lambda</span> s: {**s, <span class="st">"response"</span>: s.get(<span class="st">"rejection_reason"</span>, <span class="st">"Order blocked."</span>)})
+
+graph.set_entry_point(<span class="st">"nlu"</span>)
+graph.add_edge(<span class="st">"nlu"</span>, <span class="st">"safety"</span>)
+graph.add_conditional_edges(<span class="st">"safety"</span>,
+    <span class="ky">lambda</span> s: <span class="st">"action"</span> <span class="ky">if</span> s.get(<span class="st">"safety_approved"</span>) <span class="ky">else</span> <span class="st">"reject"</span>,
+    {<span class="st">"action"</span>: <span class="st">"action"</span>, <span class="st">"reject"</span>: <span class="st">"reject"</span>}
+)
+graph.add_edge(<span class="st">"action"</span>, END)
+graph.add_edge(<span class="st">"reject"</span>, END)
+
+pharmacy_graph = graph.compile()</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🧠</div>
+        <div class="step-info">
+          <div class="step-label">Step 4.2 · NLU Agent</div>
+          <div class="step-title">Extract Medicine Name, Dosage, Quantity & Intent via Gemini</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/agents/nlu_agent.py</div>
+        <pre><span class="ky">from</span> langchain_core.messages <span class="ky">import</span> SystemMessage
+<span class="ky">import</span> json, re
+
+<span class="ky">def</span> <span class="fn">nlu_node</span>(state: dict, llm, langfuse) -> dict:
+    trace = langfuse.trace(name=<span class="st">"NLU_Agent"</span>, input={<span class="st">"message"</span>: state[<span class="st">"user_input"</span>]})
+
+    prompt = <span class="st">f"""You are an AI pharmacist assistant. Extract details from this customer message.
+Return ONLY a JSON object with these exact keys:
+- medicine_name (string or null)
+- dosage (string like "500mg" or null)
+- quantity (integer or null)
+- intent (one of: "order", "refill", "query", "unknown")
+
+Do NOT include markdown, backticks, or explanation. Only raw JSON.
+
+Customer message: "{state['user_input']}"
+"""</span>
+
+    resp = llm.invoke([SystemMessage(content=prompt)])
+    raw = re.sub(r<span class="st">'```json|```'</span>, <span class="st">''</span>, resp.content).strip()
+
+    <span class="ky">try</span>:
+        parsed = json.loads(raw)
+    <span class="ky">except</span>:
+        parsed = {<span class="st">"medicine_name"</span>: <span class="nm">None</span>, <span class="st">"dosage"</span>: <span class="nm">None</span>,
+                  <span class="st">"quantity"</span>: <span class="nm">1</span>, <span class="st">"intent"</span>: <span class="st">"unknown"</span>}
+
+    trace.update(output=parsed)
+    <span class="ky">return</span> {**state, **parsed}</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🛡️</div>
+        <div class="step-info">
+          <div class="step-label">Step 4.3 · Safety Agent</div>
+          <div class="step-title">Stock Check + Prescription Policy Enforcement</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/agents/safety_agent.py</div>
+        <pre><span class="ky">from</span> db.supabase_client <span class="ky">import</span> supabase
+
+<span class="ky">def</span> <span class="fn">safety_node</span>(state: dict, langfuse) -> dict:
+    trace = langfuse.trace(name=<span class="st">"Safety_Agent"</span>, input=state)
+    name = state.get(<span class="st">"medicine_name"</span>)
+    qty  = state.get(<span class="st">"quantity"</span>) <span class="ky">or</span> <span class="nm">1</span>
+
+    <span class="ky">if not</span> name:
+        trace.update(output={<span class="st">"decision"</span>: <span class="st">"BLOCKED — no medicine identified"</span>})
+        <span class="ky">return</span> {**state, <span class="st">"safety_approved"</span>: <span class="nm">False</span>,
+                <span class="st">"rejection_reason"</span>: <span class="st">"Sorry, I couldn't identify a medicine in your message. Could you rephrase?"</span>}
+
+    result = supabase.table(<span class="st">"medicines"</span>).select(<span class="st">"*"</span>) \
+        .ilike(<span class="st">"name"</span>, <span class="st">f"%{name}%"</span>).execute()
+
+    <span class="ky">if not</span> result.data:
+        trace.update(output={<span class="st">"decision"</span>: <span class="st">"BLOCKED — not in inventory"</span>})
+        <span class="ky">return</span> {**state, <span class="st">"safety_approved"</span>: <span class="nm">False</span>,
+                <span class="st">"rejection_reason"</span>: <span class="st">f"'{name}' is not in our inventory."</span>}
+
+    med = result.data[<span class="nm">0</span>]
+
+    <span class="ky">if</span> med[<span class="st">"stock"</span>] < qty:
+        trace.update(output={<span class="st">"decision"</span>: <span class="st">"BLOCKED — insufficient stock"</span>, <span class="st">"stock"</span>: med[<span class="st">"stock"</span>]})
+        <span class="ky">return</span> {**state, <span class="st">"safety_approved"</span>: <span class="nm">False</span>, <span class="st">"stock_data"</span>: med,
+                <span class="st">"rejection_reason"</span>: <span class="st">f"Only {med['stock']} units in stock. You requested {qty}."</span>}
+
+    <span class="ky">if</span> med[<span class="st">"rx_required"</span>]:
+        trace.update(output={<span class="st">"decision"</span>: <span class="st">"BLOCKED — prescription required"</span>})
+        <span class="ky">return</span> {**state, <span class="st">"safety_approved"</span>: <span class="nm">False</span>, <span class="st">"stock_data"</span>: med,
+                <span class="st">"rejection_reason"</span>: <span class="st">"This medicine requires a valid prescription. Please upload it."</span>}
+
+    trace.update(output={<span class="st">"decision"</span>: <span class="st">"APPROVED"</span>, <span class="st">"medicine"</span>: med[<span class="st">"name"</span>]})
+    <span class="ky">return</span> {**state, <span class="st">"safety_approved"</span>: <span class="nm">True</span>, <span class="st">"stock_data"</span>: med}</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">⚙️</div>
+        <div class="step-info">
+          <div class="step-label">Step 4.4 · Action Agent</div>
+          <div class="step-title">Write Order + Webhook + Email + WhatsApp</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/agents/action_agent.py</div>
+        <pre><span class="ky">import</span> httpx, os
+<span class="ky">from</span> db.supabase_client <span class="ky">import</span> supabase
+<span class="ky">from</span> services.email_service <span class="ky">import</span> send_order_confirmation
+<span class="ky">from</span> services.whatsapp_service <span class="ky">import</span> send_order_whatsapp
+
+<span class="ky">def</span> <span class="fn">action_node</span>(state: dict, langfuse) -> dict:
+    trace = langfuse.trace(name=<span class="st">"Action_Agent"</span>, input=state)
+    med = state[<span class="st">"stock_data"</span>]
+    qty = state[<span class="st">"quantity"</span>] <span class="ky">or</span> <span class="nm">1</span>
+
+    <span class="cm"># 1. Write order to DB</span>
+    order = supabase.table(<span class="st">"orders"</span>).insert({
+        <span class="st">"patient_id"</span>:  state[<span class="st">"patient_id"</span>],
+        <span class="st">"medicine_id"</span>: med[<span class="st">"id"</span>],
+        <span class="st">"quantity"</span>:    qty
+    }).execute()
+    order_id = order.data[<span class="nm">0</span>][<span class="st">"id"</span>]
+
+    <span class="cm"># 2. Decrement stock</span>
+    supabase.table(<span class="st">"medicines"</span>).update({
+        <span class="st">"stock"</span>: med[<span class="st">"stock"</span>] - qty
+    }).eq(<span class="st">"id"</span>, med[<span class="st">"id"</span>]).execute()
+
+    <span class="cm"># 3. Fire warehouse webhook</span>
+    <span class="ky">try</span>:
+        httpx.post(os.getenv(<span class="st">"WAREHOUSE_WEBHOOK_URL"</span>), json={
+            <span class="st">"order_id"</span>: order_id, <span class="st">"medicine"</span>: med[<span class="st">"name"</span>],
+            <span class="st">"quantity"</span>: qty, <span class="st">"patient_id"</span>: state[<span class="st">"patient_id"</span>]
+        }, timeout=<span class="nm">5.0</span>)
+    <span class="ky">except</span>: <span class="ky">pass</span>
+
+    <span class="cm"># 4. Send email confirmation (Resend)</span>
+    <span class="ky">if</span> state.get(<span class="st">"patient_email"</span>):
+        <span class="ky">try</span>:
+            send_order_confirmation(
+                state[<span class="st">"patient_email"</span>], state.get(<span class="st">"patient_name"</span>, <span class="st">"Customer"</span>),
+                med[<span class="st">"name"</span>], qty, order_id
+            )
+        <span class="ky">except</span>: <span class="ky">pass</span>
+
+    <span class="cm"># 5. Send WhatsApp (Twilio)</span>
+    <span class="ky">if</span> state.get(<span class="st">"patient_phone"</span>):
+        <span class="ky">try</span>:
+            send_order_whatsapp(state[<span class="st">"patient_phone"</span>], med[<span class="st">"name"</span>], qty, order_id)
+        <span class="ky">except</span>: <span class="ky">pass</span>
+
+    trace.update(output={<span class="st">"order_id"</span>: order_id, <span class="st">"notifications"</span>: <span class="st">"email+whatsapp+webhook"</span>})
+    <span class="ky">return</span> {**state, <span class="st">"order_id"</span>: order_id,
+        <span class="st">"response"</span>: <span class="st">f"✅ Order #{order_id} confirmed for {qty}x {med['name']}! "
+                     f"Confirmation sent via email & WhatsApp. Warehouse notified 🏭"</span>}</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🔮</div>
+        <div class="step-info">
+          <div class="step-label">Step 4.5 · Prediction Agent</div>
+          <div class="step-title">Background Refill Scanner + WhatsApp Nudge</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/agents/prediction_agent.py</div>
+        <pre><span class="ky">from</span> datetime <span class="ky">import</span> date, timedelta
+<span class="ky">from</span> db.supabase_client <span class="ky">import</span> supabase
+<span class="ky">from</span> services.whatsapp_service <span class="ky">import</span> send_refill_nudge
+
+<span class="ky">def</span> <span class="fn">run_prediction</span>(notify: bool = <span class="nm">False</span>) -> list:
+    history = supabase.table(<span class="st">"order_history"</span>).select(<span class="st">"*"</span>).execute().data
+    alerts = []
+
+    <span class="ky">for</span> r <span class="ky">in</span> history:
+        purchase = date.fromisoformat(r[<span class="st">"purchase_date"</span>])
+        days_supply = r.get(<span class="st">"days_supply"</span>, <span class="nm">30</span>)
+        runout_date = purchase + timedelta(days=days_supply)
+        days_left = (runout_date - date.today()).days
+
+        <span class="ky">if</span> days_left <= <span class="nm">5</span>:
+            alert = {
+                <span class="st">"patient_id"</span>:   r[<span class="st">"patient_id"</span>],
+                <span class="st">"patient_name"</span>: r[<span class="st">"patient_name"</span>],
+                <span class="st">"medicine"</span>:     r[<span class="st">"medicine_name"</span>],
+                <span class="st">"days_left"</span>:    days_left,
+                <span class="st">"urgency"</span>:      <span class="st">"critical"</span> <span class="ky">if</span> days_left <= <span class="nm">2</span> <span class="ky">else</span> <span class="st">"warning"</span>
+            }
+            alerts.append(alert)
+
+            <span class="cm"># WhatsApp nudge if notify=True and phone exists</span>
+            <span class="ky">if</span> notify <span class="ky">and</span> r.get(<span class="st">"patient_phone"</span>):
+                <span class="ky">try</span>:
+                    send_refill_nudge(r[<span class="st">"patient_phone"</span>], r[<span class="st">"patient_name"</span>],
+                                      r[<span class="st">"medicine_name"</span>], days_left)
+                <span class="ky">except</span>: <span class="ky">pass</span>
+
+    <span class="ky">return</span> alerts</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 5: FASTAPI -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p5">
+    <div class="phase-header">
+      <div class="phase-num">5</div>
+      <div>
+        <div class="phase-title">FastAPI Backend</div>
+        <div class="phase-sub">All REST endpoints the Next.js frontend will call</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🚀</div>
+        <div class="step-info">
+          <div class="step-label">Step 5.1 · main.py</div>
+          <div class="step-title">Complete FastAPI App with All Routes</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/main.py</div>
+        <pre><span class="ky">from</span> fastapi <span class="ky">import</span> FastAPI, UploadFile, File
+<span class="ky">from</span> fastapi.middleware.cors <span class="ky">import</span> CORSMiddleware
+<span class="ky">from</span> pydantic <span class="ky">import</span> BaseModel
+<span class="ky">from</span> dotenv <span class="ky">import</span> load_dotenv
+<span class="ky">from</span> agents.graph <span class="ky">import</span> pharmacy_graph
+<span class="ky">from</span> agents.prediction_agent <span class="ky">import</span> run_prediction
+<span class="ky">from</span> services.voice_service <span class="ky">import</span> transcribe_audio
+<span class="ky">from</span> db.supabase_client <span class="ky">import</span> supabase
+
+load_dotenv()
+app = FastAPI(title=<span class="st">"PharmAgent API v1"</span>)
+
+app.add_middleware(CORSMiddleware,
+    allow_origins=[<span class="st">"*"</span>], allow_methods=[<span class="st">"*"</span>], allow_headers=[<span class="st">"*"</span>])
+
+<span class="ky">class</span> <span class="fn">ChatRequest</span>(BaseModel):
+    message:       str
+    patient_id:    str = <span class="st">"guest"</span>
+    patient_name:  str = <span class="st">"Customer"</span>
+    patient_email: str = <span class="nm">None</span>
+    patient_phone: str = <span class="nm">None</span>
+
+<span class="cm"># ── POST /chat — runs full LangGraph pipeline</span>
+<span class="ky">@app</span>.post(<span class="st">"/chat"</span>)
+<span class="ky">async def</span> <span class="fn">chat</span>(req: ChatRequest):
+    result = pharmacy_graph.invoke(req.dict())
+    <span class="ky">return</span> {<span class="st">"response"</span>: result[<span class="st">"response"</span>], <span class="st">"order_id"</span>: result.get(<span class="st">"order_id"</span>)}
+
+<span class="cm"># ── POST /transcribe — Deepgram voice-to-text</span>
+<span class="ky">@app</span>.post(<span class="st">"/transcribe"</span>)
+<span class="ky">async def</span> <span class="fn">transcribe</span>(audio: UploadFile = File(...)):
+    audio_bytes = <span class="ky">await</span> audio.read()
+    transcript = <span class="ky">await</span> transcribe_audio(audio_bytes)
+    <span class="ky">return</span> {<span class="st">"transcript"</span>: transcript}
+
+<span class="cm"># ── GET /inventory — all medicines with stock</span>
+<span class="ky">@app</span>.get(<span class="st">"/inventory"</span>)
+<span class="ky">async def</span> <span class="fn">get_inventory</span>():
+    <span class="ky">return</span> supabase.table(<span class="st">"medicines"</span>).select(<span class="st">"*"</span>).order(<span class="st">"name"</span>).execute().data
+
+<span class="cm"># ── GET /refill-alerts — proactive patient alerts</span>
+<span class="ky">@app</span>.get(<span class="st">"/refill-alerts"</span>)
+<span class="ky">async def</span> <span class="fn">refill_alerts</span>(notify: bool = <span class="nm">False</span>):
+    <span class="ky">return</span> run_prediction(notify=notify)
+
+<span class="cm"># ── GET /orders — recent order log</span>
+<span class="ky">@app</span>.get(<span class="st">"/orders"</span>)
+<span class="ky">async def</span> <span class="fn">get_orders</span>():
+    <span class="ky">return</span> supabase.table(<span class="st">"orders"</span>).select(<span class="st">"*"</span>) \
+        .order(<span class="st">"created_at"</span>, desc=<span class="nm">True</span>).limit(<span class="nm">50</span>).execute().data</pre>
+      </div>
+      <div class="info-box info-tip">▶ Start backend: <code>uvicorn main:app --reload --port 8000</code><br>📖 Swagger docs auto at: <code>http://localhost:8000/docs</code></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 6: NEXT.JS FRONTEND -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p6">
+    <div class="phase-header">
+      <div class="phase-num">6</div>
+      <div>
+        <div class="phase-title">Next.js Frontend</div>
+        <div class="phase-sub">App Router · Chat page · Admin page · Voice button · Tailwind</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🏗️</div>
+        <div class="step-info">
+          <div class="step-label">Step 6.1 · Layout + Nav</div>
+          <div class="step-title">Root Layout with Chat / Admin Navigation</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">frontend/app/layout.jsx</div>
+        <pre><span class="ky">import</span> <span class="st">"./globals.css"</span>
+<span class="ky">import</span> Link <span class="ky">from</span> <span class="st">"next/link"</span>
+
+<span class="ky">export const</span> metadata = { title: <span class="st">"PharmAgent"</span> }
+
+<span class="ky">export default function</span> <span class="fn">RootLayout</span>({ children }) {
+  <span class="ky">return</span> (
+    <span class="tg">&lt;html lang="en"&gt;</span>
+      <span class="tg">&lt;body className="bg-gray-950 text-white min-h-screen"&gt;</span>
+        <span class="tg">&lt;nav className="flex items-center gap-6 px-6 py-4 border-b border-gray-800"&gt;</span>
+          <span class="tg">&lt;span className="font-bold text-cyan-400 text-lg"&gt;</span>💊 PharmAgent<span class="tg">&lt;/span&gt;</span>
+          <span class="tg">&lt;Link href="/" className="text-sm text-gray-400 hover:text-white"&gt;</span>Chat<span class="tg">&lt;/Link&gt;</span>
+          <span class="tg">&lt;Link href="/admin" className="text-sm text-gray-400 hover:text-white"&gt;</span>Admin<span class="tg">&lt;/Link&gt;</span>
+        <span class="tg">&lt;/nav&gt;</span>
+        <span class="tg">&lt;main&gt;</span>{children}<span class="tg">&lt;/main&gt;</span>
+      <span class="tg">&lt;/body&gt;</span>
+    <span class="tg">&lt;/html&gt;</span>
+  )
+}</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">💬</div>
+        <div class="step-info">
+          <div class="step-label">Step 6.2 · Chat Page</div>
+          <div class="step-title">Patient Chat Interface with Voice Button</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">frontend/app/page.jsx  ("use client")</div>
+        <pre><span class="st">"use client"</span>
+<span class="ky">import</span> { useState, useRef } <span class="ky">from</span> <span class="st">"react"</span>
+<span class="ky">import</span> axios <span class="ky">from</span> <span class="st">"axios"</span>
+
+<span class="ky">const</span> API = process.env.NEXT_PUBLIC_API_URL
+
+<span class="ky">export default function</span> <span class="fn">ChatPage</span>() {
+  <span class="ky">const</span> [messages, setMessages] = useState([
+    { role: <span class="st">"bot"</span>, text: <span class="st">"👋 Hi! I'm your AI pharmacist. How can I help you today?"</span> }
+  ])
+  <span class="ky">const</span> [input, setInput]       = useState(<span class="st">""</span>)
+  <span class="ky">const</span> [loading, setLoading]   = useState(<span class="nm">false</span>)
+  <span class="ky">const</span> [recording, setRecording] = useState(<span class="nm">false</span>)
+  <span class="ky">const</span> recorderRef = useRef(<span class="nm">null</span>)
+
+  <span class="ky">const</span> sendMessage = <span class="ky">async</span> (text) => {
+    <span class="ky">if</span> (!text.trim()) <span class="ky">return</span>
+    setMessages(m => [...m, { role: <span class="st">"user"</span>, text }])
+    setInput(<span class="st">""</span>)
+    setLoading(<span class="nm">true</span>)
+    <span class="ky">try</span> {
+      <span class="ky">const</span> res = <span class="ky">await</span> axios.post(<span class="st">`${API}/chat`</span>, {
+        message: text, patient_id: <span class="st">"P001"</span>,
+        patient_name: <span class="st">"Test Patient"</span>,
+        patient_email: <span class="st">"test@example.com"</span>,
+        patient_phone: <span class="st">"+91XXXXXXXXXX"</span>    <span class="cm">// replace in production</span>
+      })
+      setMessages(m => [...m, { role: <span class="st">"bot"</span>, text: res.data.response }])
+    } <span class="ky">finally</span> { setLoading(<span class="nm">false</span>) }
+  }
+
+  <span class="ky">const</span> toggleVoice = <span class="ky">async</span> () => {
+    <span class="ky">if</span> (recording) {
+      recorderRef.current?.stop()
+      setRecording(<span class="nm">false</span>)
+      <span class="ky">return</span>
+    }
+    <span class="ky">const</span> stream = <span class="ky">await</span> navigator.mediaDevices.getUserMedia({ audio: <span class="nm">true</span> })
+    <span class="ky">const</span> recorder = <span class="ky">new</span> MediaRecorder(stream)
+    recorderRef.current = recorder
+    <span class="ky">const</span> chunks = []
+    recorder.ondataavailable = e => chunks.push(e.data)
+    recorder.onstop = <span class="ky">async</span> () => {
+      <span class="ky">const</span> blob = <span class="ky">new</span> Blob(chunks, { type: <span class="st">"audio/webm"</span> })
+      <span class="ky">const</span> fd = <span class="ky">new</span> FormData()
+      fd.append(<span class="st">"audio"</span>, blob, <span class="st">"voice.webm"</span>)
+      <span class="ky">const</span> r = <span class="ky">await</span> axios.post(<span class="st">`${API}/transcribe`</span>, fd)
+      sendMessage(r.data.transcript)
+    }
+    recorder.start()
+    setRecording(<span class="nm">true</span>)
+  }
+
+  <span class="ky">return</span> (
+    <span class="tg">&lt;div className="flex flex-col h-[calc(100vh-64px)]"&gt;</span>
+      <span class="tg">&lt;div className="flex-1 overflow-y-auto p-4 space-y-3"&gt;</span>
+        {messages.map((m, i) => (
+          <span class="tg">&lt;div key={i} className={`flex ${m.role==="user"?"justify-end":"justify-start"}`}&gt;</span>
+            <span class="tg">&lt;div className={`px-4 py-3 rounded-2xl max-w-md text-sm leading-relaxed
+              ${m.role==="user"
+                ?"bg-cyan-600 text-white"
+                :"bg-gray-800 text-gray-100"}`}&gt;</span>
+              {m.text}
+            <span class="tg">&lt;/div&gt;</span>
+          <span class="tg">&lt;/div&gt;</span>
+        ))}
+        {loading && <span class="tg">&lt;div className="text-gray-500 text-sm pl-2"&gt;</span>⏳ Thinking...<span class="tg">&lt;/div&gt;</span>}
+      <span class="tg">&lt;/div&gt;</span>
+      <span class="tg">&lt;div className="p-4 border-t border-gray-800 flex gap-2"&gt;</span>
+        <span class="tg">&lt;input value={input} onChange={e=&gt;setInput(e.target.value)}
+          onKeyDown={e=&gt;e.key==="Enter"&amp;&amp;sendMessage(input)}
+          placeholder="e.g. I need paracetamol 500mg, 2 strips"
+          className="flex-1 bg-gray-800 rounded-xl px-4 py-2.5 text-sm outline-none
+                     focus:ring-1 focus:ring-cyan-500" /&gt;</span>
+        <span class="tg">&lt;button onClick={()=&gt;sendMessage(input)}
+          className="bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 rounded-xl text-sm font-bold"&gt;</span>
+          Send
+        <span class="tg">&lt;/button&gt;</span>
+        <span class="tg">&lt;button onClick={toggleVoice}
+          className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all
+            ${recording?"bg-red-500 animate-pulse":"bg-gray-700 hover:bg-gray-600"}`}&gt;</span>
+          {recording ? <span class="st">"⏹"</span> : <span class="st">"🎙"</span>}
+        <span class="tg">&lt;/button&gt;</span>
+      <span class="tg">&lt;/div&gt;</span>
+    <span class="tg">&lt;/div&gt;</span>
+  )
+}</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🖥️</div>
+        <div class="step-info">
+          <div class="step-label">Step 6.3 · Admin Page</div>
+          <div class="step-title">Inventory Table + Refill Alerts Dashboard</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">frontend/app/admin/page.jsx  ("use client")</div>
+        <pre><span class="st">"use client"</span>
+<span class="ky">import</span> { useEffect, useState } <span class="ky">from</span> <span class="st">"react"</span>
+<span class="ky">import</span> axios <span class="ky">from</span> <span class="st">"axios"</span>
+<span class="ky">const</span> API = process.env.NEXT_PUBLIC_API_URL
+
+<span class="ky">export default function</span> <span class="fn">AdminPage</span>() {
+  <span class="ky">const</span> [inventory, setInventory] = useState([])
+  <span class="ky">const</span> [alerts, setAlerts]       = useState([])
+  <span class="ky">const</span> [orders, setOrders]       = useState([])
+
+  useEffect(() => {
+    axios.get(<span class="st">`${API}/inventory`</span>).then(r => setInventory(r.data))
+    axios.get(<span class="st">`${API}/refill-alerts`</span>).then(r => setAlerts(r.data))
+    axios.get(<span class="st">`${API}/orders`</span>).then(r => setOrders(r.data))
+  }, [])
+
+  <span class="ky">const</span> sendWhatsAppNudges = () =>
+    axios.get(<span class="st">`${API}/refill-alerts?notify=true`</span>)
+      .then(() => alert(<span class="st">"✅ WhatsApp nudges sent to all at-risk patients!"</span>))
+
+  <span class="ky">return</span> (
+    <span class="tg">&lt;div className="p-6 space-y-10 max-w-5xl mx-auto"&gt;</span>
+      <span class="tg">&lt;h1 className="text-2xl font-bold"&gt;</span>🖥️ Admin Dashboard<span class="tg">&lt;/h1&gt;</span>
+
+      <span class="cm">{/* Refill Alerts */}</span>
+      <span class="tg">&lt;section&gt;</span>
+        <span class="tg">&lt;div className="flex items-center justify-between mb-3"&gt;</span>
+          <span class="tg">&lt;h2 className="text-red-400 font-bold text-lg"&gt;</span>🚨 Proactive Refill Alerts ({alerts.length})<span class="tg">&lt;/h2&gt;</span>
+          <span class="tg">&lt;button onClick={sendWhatsAppNudges}
+            className="bg-green-600 hover:bg-green-500 text-sm px-4 py-2 rounded-lg font-bold"&gt;</span>
+            📲 Send WhatsApp Nudges
+          <span class="tg">&lt;/button&gt;</span>
+        <span class="tg">&lt;/div&gt;</span>
+        {alerts.map((a, i) => (
+          <span class="tg">&lt;div key={i} className={`p-3 rounded-lg mb-2 flex justify-between text-sm
+            ${a.urgency==="critical"
+              ?"bg-red-900/40 border border-red-700"
+              :"bg-yellow-900/30 border border-yellow-700"}`}&gt;</span>
+            <span class="tg">&lt;span&gt;</span><span class="tg">&lt;b&gt;</span>{a.patient_name}<span class="tg">&lt;/b&gt;</span> — {a.medicine}<span class="tg">&lt;/span&gt;</span>
+            <span class="tg">&lt;span className="text-red-300"&gt;</span>{a.days_left} days left<span class="tg">&lt;/span&gt;</span>
+          <span class="tg">&lt;/div&gt;</span>
+        ))}
+        {alerts.length === <span class="nm">0</span> && <span class="tg">&lt;p className="text-gray-500 text-sm"&gt;</span>No alerts right now ✅<span class="tg">&lt;/p&gt;</span>}
+      <span class="tg">&lt;/section&gt;</span>
+
+      <span class="cm">{/* Inventory */}</span>
+      <span class="tg">&lt;section&gt;</span>
+        <span class="tg">&lt;h2 className="font-bold text-lg mb-3"&gt;</span>💊 Inventory<span class="tg">&lt;/h2&gt;</span>
+        <span class="tg">&lt;table className="w-full text-sm border-collapse"&gt;</span>
+          <span class="tg">&lt;thead&gt;&lt;tr className="text-left text-gray-400 border-b border-gray-700 text-xs uppercase tracking-widest"&gt;</span>
+            <span class="tg">&lt;th className="py-2 pr-4"&gt;</span>Medicine<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Dosage<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Stock<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Unit<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Rx?<span class="tg">&lt;/th&gt;</span>
+          <span class="tg">&lt;/tr&gt;&lt;/thead&gt;</span>
+          <span class="tg">&lt;tbody&gt;</span>{inventory.map((m, i) => (
+            <span class="tg">&lt;tr key={i} className="border-b border-gray-800 hover:bg-gray-800/40"&gt;</span>
+              <span class="tg">&lt;td className="py-2 pr-4 font-medium"&gt;</span>{m.name}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td className="text-gray-400"&gt;</span>{m.dosage}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td className={m.stock &lt; 10 ? "text-red-400 font-bold" : "text-green-400"}&gt;</span>{m.stock}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td className="text-gray-400"&gt;</span>{m.unit}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td&gt;</span>{m.rx_required ? <span class="st">"🔒 Yes"</span> : <span class="st">"✅ No"</span>}<span class="tg">&lt;/td&gt;</span>
+            <span class="tg">&lt;/tr&gt;</span>
+          ))}<span class="tg">&lt;/tbody&gt;</span>
+        <span class="tg">&lt;/table&gt;</span>
+      <span class="tg">&lt;/section&gt;</span>
+
+      <span class="cm">{/* Recent Orders */}</span>
+      <span class="tg">&lt;section&gt;</span>
+        <span class="tg">&lt;h2 className="font-bold text-lg mb-3"&gt;</span>📋 Recent Orders<span class="tg">&lt;/h2&gt;</span>
+        <span class="tg">&lt;table className="w-full text-sm border-collapse"&gt;</span>
+          <span class="tg">&lt;thead&gt;&lt;tr className="text-left text-gray-400 border-b border-gray-700 text-xs uppercase tracking-widest"&gt;</span>
+            <span class="tg">&lt;th className="py-2 pr-4"&gt;</span>Order ID<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Patient<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Qty<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Status<span class="tg">&lt;/th&gt;&lt;th&gt;</span>Time<span class="tg">&lt;/th&gt;</span>
+          <span class="tg">&lt;/tr&gt;&lt;/thead&gt;</span>
+          <span class="tg">&lt;tbody&gt;</span>{orders.map((o, i) => (
+            <span class="tg">&lt;tr key={i} className="border-b border-gray-800"&gt;</span>
+              <span class="tg">&lt;td className="py-2 pr-4 text-cyan-400"&gt;</span>#{o.id}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td&gt;</span>{o.patient_id}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td&gt;</span>{o.quantity}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td className="text-green-400"&gt;</span>{o.status}<span class="tg">&lt;/td&gt;</span>
+              <span class="tg">&lt;td className="text-gray-500"&gt;</span>{new Date(o.created_at).toLocaleString()}<span class="tg">&lt;/td&gt;</span>
+            <span class="tg">&lt;/tr&gt;</span>
+          ))}<span class="tg">&lt;/tbody&gt;</span>
+        <span class="tg">&lt;/table&gt;</span>
+      <span class="tg">&lt;/section&gt;</span>
+    <span class="tg">&lt;/div&gt;</span>
+  )
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 7: OBSERVABILITY -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p7">
+    <div class="phase-header">
+      <div class="phase-num">7</div>
+      <div>
+        <div class="phase-title">Langfuse Observability</div>
+        <div class="phase-sub">Mandatory — missing trace link = disqualified</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🔭</div>
+        <div class="step-info">
+          <div class="step-label">Step 7.1 · Langfuse Setup</div>
+          <div class="step-title">Get Public Trace Link for Judges</div>
+          <div class="step-desc">Every agent call is already traced via the langfuse.trace() calls in each agent. Now just share the link.</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Steps to get your public Langfuse link</div>
+        <pre><span class="nm">1.</span> Sign up at cloud.langfuse.com
+<span class="nm">2.</span> Create a new project → copy Public Key + Secret Key → paste into .env
+<span class="nm">3.</span> Run your app and make a few test orders
+<span class="nm">4.</span> Go to Langfuse dashboard → you will see traces appearing in real time
+<span class="nm">5.</span> Settings → Sharing → Enable Public Access → copy the public URL
+<span class="nm">6.</span> Add that URL to your GitHub README under "Observability Trace Log"</pre>
+      </div>
+      <div class="info-box info-req">⚠ CRITICAL: Judges WILL check this link. Without it your submission is disqualified. Do this before submitting.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PHASE 8: DEPLOY -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="phase p8">
+    <div class="phase-header">
+      <div class="phase-num">8</div>
+      <div>
+        <div class="phase-title">Deployment</div>
+        <div class="phase-sub">Frontend → Vercel · Backend → Railway · DB → Supabase Cloud</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">▲</div>
+        <div class="step-info">
+          <div class="step-label">Step 8.1 · Frontend</div>
+          <div class="step-title">Deploy Next.js to Vercel (Free, 1 Command)</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">In /frontend</div>
+        <pre>npm install -g vercel
+vercel --prod
+<span class="cm"># In Vercel dashboard → Environment Variables:
+# NEXT_PUBLIC_API_URL = https://your-railway-app.railway.app</span></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">🚂</div>
+        <div class="step-info">
+          <div class="step-label">Step 8.2 · Backend</div>
+          <div class="step-title">Deploy FastAPI to Railway (Free Tier)</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">backend/requirements.txt (create this file)</div>
+        <pre>fastapi
+uvicorn
+python-multipart
+langgraph
+langchain-google-genai
+langchain-core
+supabase
+langfuse
+httpx
+resend
+twilio
+pandas
+python-dotenv</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Deploy steps</div>
+        <pre><span class="nm">1.</span> Push your /backend folder to GitHub
+<span class="nm">2.</span> Go to railway.app → New Project → Deploy from GitHub repo
+<span class="nm">3.</span> Add ALL .env variables in Railway → Variables tab
+<span class="nm">4.</span> Set start command: uvicorn main:app --host 0.0.0.0 --port $PORT
+<span class="nm">5.</span> Railway gives you a public URL — use it in Vercel env vars</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-icon">📋</div>
+        <div class="step-info">
+          <div class="step-label">Step 8.3 · README</div>
+          <div class="step-title">Final Submission Checklist</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">README.md — must include all of these</div>
+        <pre><span class="cm">## PharmAgent — HackFusion 3 Submission</span>
+
+🌐 <span class="st">Live URL:</span>         https://pharmagent.vercel.app
+🔧 <span class="st">API URL:</span>          https://pharmagent.railway.app/docs
+🔭 <span class="st">Langfuse Traces:</span>  https://cloud.langfuse.com/public/xxx   ← CRITICAL
+
+<span class="cm">## Stack</span>
+Frontend:      Next.js 14 + Tailwind CSS → Vercel
+Backend:       FastAPI + LangGraph + Gemini Pro → Railway
+Database:      Supabase (PostgreSQL)
+Agents:        LangGraph (NLU → Safety → Action / Reject)
+Observability: Langfuse (live trace log link above)
+Voice:         Deepgram Nova-2 STT
+Email:         Resend
+WhatsApp:      Twilio WhatsApp Sandbox
+Webhook:       webhook.site (mock warehouse)
+
+<span class="cm">## Run Locally</span>
+cd backend && pip install -r requirements.txt
+python seed.py      # seed DB once
+uvicorn main:app --reload
+
+cd frontend && npm install && npm run dev</pre>
+      </div>
+    </div>
+  </div>
+
+  <footer>PHARMAGENT · HACKFUSION 3 · NEXT.JS + FASTAPI + GEMINI PRO + LANGGRAPH · ALL BONUS FEATURES INCLUDED</footer>
+
+</div>
+</body>
+</html>
